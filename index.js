@@ -151,14 +151,12 @@ let git = {
 
 const setCwd = (pid, action) => {
     if (process.platform == 'win32') {
-        let directoryRegex = /([a-zA-Z]:[^\:\[\]\?\"\<\>\|]+)/mi;
-        if (action && action.data) {
-            let path = directoryRegex.exec(action.data);
-            if(path){
-                cwd = path[0];
+        exec(`readlink -e /proc/${pid}/cwd`, (err, stdout) => {
+            exec(`cygpath -w ${stdout}`, (err, stdout) => {
+                cwd = stdout.trim();
                 setGit(cwd);
-            }
-        }
+            })
+        });
     } else {
         exec(`lsof -p ${pid} | awk '$4=="cwd"' | tr -s ' ' | cut -d ' ' -f9-`, (err, stdout) => {
             cwd = stdout.trim();
